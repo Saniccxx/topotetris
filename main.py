@@ -206,5 +206,5 @@ while running:
 
 
     pygame.display.update()
-
+#end
 pygame.quit()
