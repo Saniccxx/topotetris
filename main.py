@@ -10,6 +10,7 @@ rows = 24
 tile_size = 30
 EMPTY = 0
 BLOCK = 1
+FALLING = 2
 points = 0
 level = 0
 single_line = 100 * level
@@ -17,8 +18,11 @@ double_line = 300 * level
 triple_line = 500 * level
 tetris = 800 * level
 
-types = ["I", "J", "L", "O", "S", "T", "Z"]
+let_left = True
+let_right = True
 
+types = ["I", "J", "L", "O", "S", "T", "Z"]
+falls = [[False for c in range(columns)] for r in range(rows)]
 
 screen = pygame.display.set_mode((columns * tile_size, rows * tile_size))
 pygame.display.set_caption("Topotetris")
@@ -106,50 +110,69 @@ def spawn(board, type):
         column = 3
         for c in range(4):
             board[2][column + c] = "I"
+            falls[2][column + c] = True
     elif type == "J":
         column = 3
         for c in range(3):
             board[1][column + c] = "J"
+            falls[1][column + c] = True
             if c == 0:
                 board[0][column] = "J"
+                falls[0][column] = True
     elif type == "L":
         column = 3
         for c in range(3):
             board[1][column + c] = "L"
+            falls[1][column + c] = True
             if c == 2:
-                board[0][column + c] = "J"
+                board[0][column + c] = "L"
+                falls[0][column + c] = True
     elif type == "O":
         column = 4
         for c in range(2):
             board[1][column + c] = "O"
             board[0][column + c] = "O"
+            falls[1][column + c] = True
+            falls[0][column + c] = True
     elif type == "S":
         column = 3
         for c in range(3):
             if c == 0:
                 board[1][column + c] = "S"
+                falls[1][column + c] = True
             elif c == 1:
                 board[1][column + c] = "S"
                 board[0][column + c] = "S"
+                falls[1][column + c] = True
+                falls[0][column + c] = True
             elif c == 2:
                 board[0][column + c] = "S"
+                falls[0][column + c] = True
     elif type == "T":
         column = 3
         for c in range(3):
             board[1][column + c] = "T"
+            falls[1][column + c] = True
             if c == 1:
                 board[1][column + c] = "T"
                 board[0][column + c] = "T"
+                falls[1][column + c] = True
+                falls[0][column + c] = True
     elif type == "Z":
         column = 3
         for c in range(3):
             if c == 0:
                 board[0][column + c] = "Z"
+                falls[0][column + c] = True
             elif c == 1:
                 board[0][column + c] = "Z"
                 board[1][column + c] = "Z"
+                falls[0][column + c] = True
+                falls[1][column + c] = True
             elif c == 2:
                 board[1][column + c] = "Z"
+                falls[1][column + c] = True
+
 
 
 
@@ -168,6 +191,53 @@ def score():
                 count += 500
 
 
+def left():
+    global let_left
+    temp_board = []
+    if let_left:
+        for r in range(rows):
+            for c in range(columns):
+                if falls[r][c]:
+                    if c - 1 >= 0 and board[r][c - 1] == EMPTY:
+                        falls[r][c - 1] = True
+                        falls[r][c] = False
+                        board[r][c - 1] = board[r][c]
+                        board[r][c] = EMPTY
+                        if c - 2 < 0:
+                            let_left = False
+    else:
+        pass
+
+def right():
+    global let_right
+    temp_falls = [[False for c in range(columns)] for r in range(rows)]
+    temp_board = [[0 for c in range(columns)] for r in range(rows)]
+    if let_right:
+        for r in range(rows):
+            for c in range(columns):
+                if falls[r][c]:
+                    if c + 1 < columns and board[r][c + 1] == EMPTY:
+                        temp_falls[r][c + 1] = True
+                        falls[r][c] = False
+                        temp_board[r][c + 1] = board[r][c]
+                        board[r][c] = EMPTY
+                        if c + 2 >= rows:
+                            let_right = False
+        for r in range(rows):
+            for c in range(columns):
+                if temp_board[r][c] != 0:
+                    board[r][c] = temp_board[r][c]
+                if temp_falls[r][c]:
+                    falls[r][c] = temp_falls[r][c]
+    else:
+        pass
+
+def check():
+    for r in range(rows):
+        for c in range(columns):
+            if falls[r][c]:
+                return False
+    return True
 
 def leaders(points):
     pass
@@ -178,31 +248,63 @@ spawn(board, random.choice(types))
 running = True
 while running:
     clock.tick(fps)
-    screen.fill((255, 255, 255))
+    screen.fill((0, 0, 0))
     for event in pygame.event.get():
         if event.type == QUIT or event.type == pygame.K_ESCAPE:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                left()
+            elif event.key == pygame.K_RIGHT:
+                right()
 
+
+    row = rows - 1
+    column = 0
+    while True:
+
+        if falls[row][column]:
+            if row + 1 < rows and board[row + 1][column] == EMPTY:
+                board[row + 1][column] = board[row][column]
+                board[row][column] = EMPTY
+                falls[row + 1][column] = True
+                falls[row][column] = False
+            else:
+                falls[row][column] = False
+
+        if check():
+            spawn(board, random.choice(types))
+
+
+        column += 1
+        if column == columns:
+            column = 0
+            row -= 1
+        if row < 0:
+            break
 
 
 
     for row in range(rows):
         for column in range(columns):
+            pygame.draw.rect(screen, "white",
+                             pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+
             if board[row][column] == "I":
-                pygame.draw.rect(screen, color("I"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("I"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
                 # pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(column * tile_size + border_thickness, row * tile_size + border_thickness, tile_size - 2 * border_thickness, tile_size - 2 * border_thickness))
             if board[row][column] == "J":
-                pygame.draw.rect(screen, color("J"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("J"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "L":
-                pygame.draw.rect(screen, color("L"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("L"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "O":
-                pygame.draw.rect(screen, color("O"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("O"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "S":
-                pygame.draw.rect(screen, color("S"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("S"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "T":
-                pygame.draw.rect(screen, color("T"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("T"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "Z":
-                pygame.draw.rect(screen, color("Z"), pygame.Rect(column * tile_size, row * tile_size, tile_size, tile_size))
+                pygame.draw.rect(screen, color("Z"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
 
 
     pygame.display.update()
