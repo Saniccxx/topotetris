@@ -68,6 +68,7 @@ falls = [[False for c in range(columns)] for r in range(rows)]
 
 screen_width = columns * tile_size + 200
 screen_height = rows * tile_size
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Topotetris")
 clock = pygame.time.Clock()
 fps = 2
