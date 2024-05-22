@@ -491,6 +491,7 @@ def leaders(points):
 #     return 0
 
 spawn(board, random.choice(types))
+font = pygame.font.SysFont(None, 48)
 
 def fall():
     temp_falls = [[False for _ in range(columns)] for _ in range(rows)]
