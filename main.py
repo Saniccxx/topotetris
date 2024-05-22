@@ -1,3 +1,43 @@
+# -------------------Topotetris-------------------
+
+# Fizyka spadania, fizyka przemieszczania, wyświetlanie, klocki - Oleksandr Shevchenko
+#
+# podliczanie punktów, database - Olga Zyntek
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import pygame
 import random
 from pygame.constants import QUIT
@@ -9,8 +49,6 @@ rows = 24
 
 tile_size = 30
 EMPTY = 0
-BLOCK = 1
-FALLING = 2
 points = 0
 level = 0
 single_line = 100 * level
@@ -22,7 +60,7 @@ touched = False
 let_left = True
 let_right = True
 
-types = ["I", "J", "L", "O", "S", "T", "Z"]
+types = ["I", "J", "L", "O", "S", "T", "Z", "B"]
 falls = [[False for c in range(columns)] for r in range(rows)]
 
 screen = pygame.display.set_mode((columns * tile_size, rows * tile_size))
@@ -53,6 +91,8 @@ def color(type):
         return "purple"
     elif type == "Z":
         return "red"
+    elif type == "B":
+        return "brown"
 # def findpos(type):
 #     if type == "I":
 #         return 1
@@ -173,6 +213,11 @@ def spawn(board, type):
             elif c == 2:
                 board[1][column + c] = "Z"
                 falls[1][column + c] = True
+    elif type == "B":
+        column = 4
+        for c in range(4):
+            board[1 + c][column] = "B"
+            falls[1 + c][column] = True
 
 
 
@@ -716,6 +761,8 @@ while running:
                 pygame.draw.rect(screen, color("T"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "Z":
                 pygame.draw.rect(screen, color("Z"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+            if board[row][column] == "B":
+                pygame.draw.rect(screen, color("B"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
 
 
 
