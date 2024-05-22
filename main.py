@@ -49,12 +49,15 @@ rows = 24
 
 tile_size = 30
 EMPTY = 0
+BLOCK = 1
+FALLING = 2
 points = 0
-level = 0
-single_line = 100 * level
-double_line = 300 * level
-triple_line = 500 * level
-tetris = 800 * level
+level = 1
+cleared_lines = 0
+single_line = 50
+double_line = 150
+triple_line = 300
+tetris_line = 600
 touched = False
 
 let_left = True
@@ -63,7 +66,8 @@ let_right = True
 types = ["I", "J", "L", "O", "S", "T", "Z", "B"]
 falls = [[False for c in range(columns)] for r in range(rows)]
 
-screen = pygame.display.set_mode((columns * tile_size, rows * tile_size))
+screen_width = columns * tile_size + 200
+screen_height = rows * tile_size
 pygame.display.set_caption("Topotetris")
 clock = pygame.time.Clock()
 fps = 2
@@ -763,6 +767,54 @@ while running:
                 pygame.draw.rect(screen, color("Z"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "B":
                 pygame.draw.rect(screen, color("B"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+
+
+    
+    
+    pygame.draw.rect(screen, "white", pygame.Rect(columns * tile_size + 20, 20, 160, 60))
+    score_text = font.render(f"Level: {level}", True, "black")
+    screen.blit(score_text, (columns * tile_size + 30, 30))
+
+    pygame.draw.rect(screen, "white", pygame.Rect(columns * tile_size + 20, 100, 160, 60))
+    score_text_2 = font.render(f"Score: {points}", True, "black")
+    screen.blit(score_text_2, (columns * tile_size + 30, 110))
+
+    pygame.display.update()
+
+
+def delete():
+    global points, cleared_lines, level
+    full_rows = []
+    for r in range(rows):
+        if all(board[r][c] != EMPTY for c in range(columns)):
+            full_rows.append(r)
+
+    if full_rows:
+        for r in full_rows:
+            del board[r]
+            board.insert(0, [EMPTY for _ in range(columns)])
+        cleared_lines += len(full_rows)
+
+        if len(full_rows) == 1:
+            points += single_line * level
+        elif len(full_rows) == 2:
+            points += double_line * level
+        elif len(full_rows) == 3:
+            points += triple_line * level
+        elif len(full_rows) == 4:
+            points += tetris_line * level
+
+        calculate_level()
+
+
+def calculate_level():
+    global level, cleared_lines
+    if cleared_lines == 10:
+        if level < 6:
+            level += 1
+            cleared_lines -= 10
+        else:
+            level = level
 
 
 
