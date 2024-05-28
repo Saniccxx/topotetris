@@ -5,39 +5,6 @@
 # podliczanie punktów, database - Olga Zyntek
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import pygame
 import random
 from pygame.constants import QUIT
@@ -59,11 +26,11 @@ double_line = 150
 triple_line = 300
 tetris_line = 600
 touched = False
-
+current = None
 let_left = True
 let_right = True
 
-types = ["I", "J", "L", "O", "S", "T", "Z", "B"]
+types = ["I", "J", "L", "O", "S", "T", "Z"]
 falls = [[False for c in range(columns)] for r in range(rows)]
 
 screen_width = columns * tile_size + 200
@@ -98,6 +65,8 @@ def color(type):
         return "red"
     elif type == "B":
         return "brown"
+
+
 # def findpos(type):
 #     if type == "I":
 #         return 1
@@ -225,11 +194,11 @@ def spawn(board, type):
             falls[1 + c][column] = True
 
 
-
-
 # sand = [[EMPTY for c in range(width)] for r in range(height)]
 # pressed = False
-
+set()
+spawn(board, current)
+font = pygame.font.SysFont(None, 48)
 def score():
     for r in range(rows):
         count = 0
@@ -300,7 +269,6 @@ def score():
 #                     return
 
 
-
 # def right():
 #     temp_falls = [[False for _ in range(columns)] for _ in range(rows)]
 #     temp_board = [[EMPTY for _ in range(columns)] for _ in range(rows)]
@@ -361,6 +329,7 @@ def score():
 #                     return
 #                 else:
 #                     return
+
 
 
 def move_right():
@@ -458,7 +427,9 @@ def left():
 
 
 
-
+def set():
+    global current
+    current = random.choice(types)
 
 def check():
     for r in range(rows):
@@ -490,8 +461,149 @@ def leaders(points):
 #                 return 1
 #     return 0
 
-spawn(board, random.choice(types))
-font = pygame.font.SysFont(None, 48)
+
+
+def printer(lista):
+    for r in range(len(lista)):
+        print()
+        for c in range(len(lista[0])):
+            print(lista[r][c], end=" ")
+def extract_subarray():
+    global rotate_x, rotate_y
+    rotate_x = 0
+    rotate_y = 0
+    rowsy = [i for i in range(len(falls)) if any(falls[i])]
+    cols = [i for i in range(len(falls[0])) if any(row[i] for row in falls)]
+    rotate_x = cols[0]
+    rotate_y = rowsy[0]
+    subarray = [[falls[r][c] for c in cols] for r in rowsy]
+    return subarray
+
+
+def rotate_matrix(m):
+    return [[m[j][i] for j in range(len(m))] for i in range(len(m[0])-1,-1,-1)]
+
+def paste():
+    global board, falls
+    temp_board = [[EMPTY for _ in range(columns)] for _ in range(rows)]
+    final_falls = [[False for _ in range(columns)] for _ in range(rows)]
+    backup_board = board
+    # printer(backup_board)
+    backup_falls = falls
+    temp = extract_subarray()
+    # current = random.choice(types)
+
+    temp_falls = [[False for _ in range(columns)] for _ in range(rows)]
+    # printer(rotate_matrix(extract_subarray()))
+
+    while len(temp) != len(temp[0]):
+        if len(temp) > len(temp[0]):
+            for r in range(len(temp)):
+                temp[r].append(False)
+        else:
+            temp.append([False for _ in range(len(temp[0]))])
+
+    # printer(temp)
+    new = rotate_matrix(temp)
+    count_new = 0
+    for r in range(len(new)):
+        for c in range(len(new[0])):
+            if new[r][c]:
+                count_new += 1
+    print("COUNTNEW:", count_new)
+    print(new)
+    for r in range(rotate_y, len(new) + rotate_y):
+        for c in range(rotate_x, len(new[0]) + rotate_x):
+            try:
+                temp_falls[r][c] = new[r - rotate_y][c - rotate_x]
+            except:
+                print(1)
+                return
+            if current == "I":
+                try:
+                    temp_falls[r][c] = new[r - rotate_y - 4][c - rotate_x]
+                except:
+                    print(2)
+                    return
+    count_falls = 0
+    for rr in range(rows):
+        for cc in range(columns):
+            if temp_falls[rr][cc]:
+                count_falls += 1
+                final_falls[rr][cc] = temp_falls[rr][cc]
+                print("CUUUUREEEENT::", current)
+                temp_board[rr][cc] = current
+                # printer(temp_board)
+    count = 0
+    for r in range(rows):
+        for c in range(columns):
+            if temp_board[r][c] != EMPTY and backup_board[r][c] != EMPTY:
+                if backup_falls[r][c]:
+                    print('nic')
+                else:
+                    count += 1
+
+    if count != 0 or (count_falls != count_new):
+        print(3)
+        return
+    else:
+        for rr in range(rows):
+            for cc in range(columns):
+                if falls[rr][cc]:
+                    falls[rr][cc] = False
+                    board[rr][cc] = EMPTY
+        for r in range(rows):
+            for c in range(columns):
+                if temp_board[r][c] != EMPTY and backup_board[r][c] == EMPTY:
+                    board[r][c] = temp_board[r][c]
+                    falls[r][c] = final_falls[r][c]
+    # printer(temp_falls)
+    # for rr in range(rows):
+    #     for cc in range(columns):
+    #         if temp_falls[rr][cc]:
+    #             if board[rr][cc] != EMPTY:
+    #                 for r in range(rows):
+    #                     for c in range(columns):
+    #                         board[r][c] = backup_board[r][c]
+    #                 # board = backup_board
+    #                 # printer(board)
+    #                 # falls = backup_falls
+    #                 print("CCC")
+    #                 return
+    # for rr in range(rows):
+    #     for cc in range(columns):
+    #         if temp_falls[rr][cc]:
+    #             if board[rr][cc] != EMPTY:
+    #                 board = backup_board
+    #                 falls = backup_falls
+    #                 print("DDD")
+    #                 return
+    #             falls[rr][cc] = temp_falls[rr][cc]
+    #             board[rr][cc] = current
+    # count = 0
+    # for rr in range(rows):
+    #     for cc in range(columns):
+    #         if temp_falls[rr][cc]:
+    #             count += 1
+    # if count == 0:
+    #     board = backup_board
+    #     falls = backup_falls
+    #     print("GGG")
+    #     return
+
+
+
+# def get():
+#     for rr in range(rows):
+#         for cc in range(columns):
+#             if falls[rr][cc]:
+#                 ro = rr
+#                 co = cc
+#                 break
+#         break
+
+def rotate():
+    paste()
 
 def fall():
     temp_falls = [[False for _ in range(columns)] for _ in range(rows)]
@@ -512,6 +624,7 @@ def fall():
             if temp_falls[r][c]:
                 falls[r][c] = temp_falls[r][c]
                 board[r][c] = temp_board[r][c]
+
 
 
 
@@ -589,7 +702,6 @@ while running:
                 touched = True
             elif board[row][column] == EMPTY and touched is False:
                 touched = False
-
 
     if not touched:
         fall()
@@ -673,7 +785,6 @@ while running:
         #         falls[row + 1][column] = True
         #         falls[row][column] = False
 
-
         # if falls[row][column]:
         #     if row + 1 < rows and column - 3 >= 0 and falls[row][column - 3] is True:
         #         if board[row + 1][column - 3] == EMPTY:
@@ -717,9 +828,8 @@ while running:
         #             for c in range(columns):
         #                 falls[r][c] = False
 
-
         if check():
-            current = random.choice(types)
+            set()
             spawn(board, current)
             touched = False
         if falls[1][5] is False and board[1][5] != EMPTY:
@@ -737,7 +847,6 @@ while running:
         # else:
         #     touched = True
 
-
         column += 1
         if column == columns:
             column = 0
@@ -745,34 +854,37 @@ while running:
         if row < 0:
             break
 
-
-
     for row in range(rows):
         for column in range(columns):
             pygame.draw.rect(screen, "white",
                              pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
 
             if board[row][column] == "I":
-                pygame.draw.rect(screen, color("I"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("I"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
                 # pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(column * tile_size + border_thickness, row * tile_size + border_thickness, tile_size - 2 * border_thickness, tile_size - 2 * border_thickness))
             if board[row][column] == "J":
-                pygame.draw.rect(screen, color("J"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("J"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "L":
-                pygame.draw.rect(screen, color("L"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("L"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "O":
-                pygame.draw.rect(screen, color("O"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("O"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "S":
-                pygame.draw.rect(screen, color("S"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("S"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "T":
-                pygame.draw.rect(screen, color("T"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("T"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "Z":
-                pygame.draw.rect(screen, color("Z"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("Z"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
             if board[row][column] == "B":
-                pygame.draw.rect(screen, color("B"), pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
+                pygame.draw.rect(screen, color("B"),
+                                 pygame.Rect(column * tile_size, row * tile_size, tile_size - 3, tile_size - 3))
 
-
-    
-    
     pygame.draw.rect(screen, "white", pygame.Rect(columns * tile_size + 20, 20, 160, 60))
     score_text = font.render(f"Level: {level}", True, "black")
     screen.blit(score_text, (columns * tile_size + 30, 30))
@@ -818,8 +930,8 @@ def calculate_level():
         else:
             level = level
 
-
-
     pygame.display.update()
-#end
+
+
+# end
 pygame.quit()
